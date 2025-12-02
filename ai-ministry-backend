@@ -1,0 +1,63 @@
+ai-ministry-backend/
+│
+├── package.json
+│
+└── netlify/
+    └── functions/
+        └── ai.js
+{
+  "name": "ai-ministry-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "openai": "^4.0.0"
+  }
+}
+import OpenAI from "openai";
+
+export const handler = async (event, context) => {
+  try {
+    const body = JSON.parse(event.body || "{}");
+    const prompt = body.prompt;
+
+    if (!prompt) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Missing prompt." })
+      };
+    }
+
+    const client = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+
+    const completion = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.7,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are The Great Assistance in Ministry AI. You help with sermons, prayers, Bible explanations, prophetic school, pastoral counseling, and spiritual guidance. You answer with scripture where relevant."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ]
+    });
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        response: completion.choices[0].message.content
+      })
+    };
+
+  } catch (error) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: error.message })
+    };
+  }
+};
